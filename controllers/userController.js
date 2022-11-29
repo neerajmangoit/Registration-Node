@@ -53,12 +53,14 @@ const userCreate = async (req, res) => {
     });
     // Sending mails
     res.send("User created successfully");
-    sendMail.send({
-      to: req.body.email,
-      from: "neerajmangoit@gmail.com",
-      text: temporaryPassword,
-      templateId: "d-d520ce1a9ebd45d1b44b3f7711cda85b",
-    });
+    if(res) {
+      sendMail.send({
+        to: req.body.email,
+        from: "neerajmangoit@gmail.com",
+        text: temporaryPassword,
+        templateId: "d-d520ce1a9ebd45d1b44b3f7711cda85b",
+      });
+    }
   } catch (error) {
     let errors = [];
     if (error.errors) {
