@@ -6,14 +6,8 @@ const router = require('./Routes/routes');
 const sequelize = require('sequelize');
 app.use(bodyParser.json());
 
-const sendMail = require('@sendgrid/mail');
-const API_KEY = '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';
-sendMail.setApiKey(API_KEY);
-
-
 
 // routes
-
 app.use('/', router);
 
 db.authenticate().then(() => {

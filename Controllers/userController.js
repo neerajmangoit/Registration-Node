@@ -1,48 +1,82 @@
-// const db = require("../Config/database");
-const fs = require("fs");
-const sendMail = require("@sendgrid/mail");
-const API_KEY =
-  "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";
-sendMail.setApiKey(API_KEY);
-
 const db = require("../Models/index.model");
-
 const User = db.students;
-
-// const newUser = db.User;
+const { genSaltSync, hashSync, compareSync } = require("bcrypt");
 
 const getUser = async (req, res) => {
-  let data = await User.findAll();
+  let data = await User.findAll({
+    where: {
+      is_admin: "0",
+    },
+  });
   res.send(data);
 };
 
+// Function for handling validation errors
+const errorValidationHandeler = (error) => {
+  switch (error.path) {
+    case "first_name":
+      return error.message;
+  }
+  switch (error.path) {
+    case "last_name":
+      return error.message;
+  }
+  switch (error.path) {
+    case "email":
+      return error.message;
+  }
+  switch (error.path) {
+    case "age":
+      return error.message;
+  }
+  switch (error.path) {
+    case "password":
+      return error.message;
+  }
+};
+
 const userCreate = async (req, res) => {
+  const temporaryPassword = Math.floor(Math.random() * 100000000);
+
   try {
     let data = await User.create({
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      email: req.body.email,
+      first_name: req.body.first_name.toLowerCase(),
+      last_name: req.body.last_name.toLowerCase(),
+      email: req.body.email.toLowerCase(),
       age: req.body.age,
       description: req.body.description,
-      password: "12345678",
+      password: temporaryPassword,
       is_admin: 0,
     });
+    // Sending mails
     res.send("User created successfully");
     sendMail.send({
       to: req.body.email,
       from: "neerajmangoit@gmail.com",
+      text: temporaryPassword,
       templateId: "d-d520ce1a9ebd45d1b44b3f7711cda85b",
     });
   } catch (error) {
-    res.send(error);
+    let errors = [];
+    if (error.errors) {
+      error.errors.forEach((element) => {
+        let err = errorValidationHandeler(element);
+        errors.push({
+          [element["path"]]: err,
+        });
+      });
+      res.status(400).send(errors);
+    }
   }
 };
 
-const VerifyUser = async (req, res) => {
+const userVerify = async (req, res) => {
+  let salt = genSaltSync(8);
+
   try {
     let data = await User.update(
       {
-        password: req.body.newPassword,
+        password: hashSync(req.body.newPassword, salt),
       },
       {
         where: {
@@ -58,7 +92,14 @@ const VerifyUser = async (req, res) => {
       res.send("User verified successfully");
     }
   } catch (error) {
-    res.send(error);
+    let errors = [];
+    error.errors.forEach((element) => {
+      let err = errorValidationHandeler(element);
+      errors.push({
+        [element["path"]]: err,
+      });
+    });
+    res.status(400).send(errors);
   }
 };
 
@@ -66,19 +107,24 @@ const login = async (req, res) => {
   let data = await User.findOne({
     where: {
       email: req.body.email,
-      password: req.body.password,
     },
   });
-  if (!data) {
-    res.send("Please enter valid credentials");
+  if (data) {
+    let result = compareSync(req.body.password, data.password);
+    if (result) {
+      console.log(data.password);
+      res.send(data);
+    } else {
+      res.status(400).send("Please enter valid credentials");
+    }
   } else {
-    res.send(data);
+    res.status(400).send("Please enter valid credentials");
   }
 };
 
 module.exports = {
   getUser,
   userCreate,
-  VerifyUser,
+  userVerify,
   login,
 };

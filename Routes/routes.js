@@ -1,16 +1,16 @@
 const express = require('express');
-const countryController = require('../Controllers/userController');
+const userController = require('../Controllers/userController');
 
 const router = express.Router();
 
 router.get('/', (req, res) => res.send("HOME"));
 
-router.get('/get-user', countryController.getUser);
+router.get('/get-users', userController.getUser);
 
-router.post('/user-create', countryController.userCreate);
+router.post('/user-create', userController.userCreate);
 
-router.put('/verify-user', countryController.VerifyUser);
+router.put('/verify-user', userController.userVerify);
 
-router.post('/login', countryController.login);
+router.post('/login', userController.login);
 
 module.exports = router;
