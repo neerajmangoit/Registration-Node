@@ -1,6 +1,8 @@
-const db = require("../Models/index.model");
+const db = require("../models/index.model");
 const User = db.students;
 const { genSaltSync, hashSync, compareSync } = require("bcrypt");
+
+
 
 const getUser = async (req, res) => {
   let data = await User.findAll({
@@ -34,6 +36,7 @@ const errorValidationHandeler = (error) => {
       return error.message;
   }
 };
+
 
 const userCreate = async (req, res) => {
   const temporaryPassword = Math.floor(Math.random() * 100000000);
@@ -70,6 +73,7 @@ const userCreate = async (req, res) => {
   }
 };
 
+
 const userVerify = async (req, res) => {
   let salt = genSaltSync(8);
 
@@ -103,6 +107,7 @@ const userVerify = async (req, res) => {
   }
 };
 
+
 const login = async (req, res) => {
   let data = await User.findOne({
     where: {
@@ -121,6 +126,7 @@ const login = async (req, res) => {
     res.status(400).send("Please enter valid credentials");
   }
 };
+
 
 module.exports = {
   getUser,
