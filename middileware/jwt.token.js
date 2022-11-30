@@ -1,20 +1,27 @@
 const jwt = require('jsonwebtoken'); //
-const jwtKey = "protect";
 
-function varifyToken(req, resp, next) {
-    const token = req.headers['authorization'];
-    // console.log(token);
-    if(token) {
-        jwt.verify(token, jwtKey, (err, valid)=> {
-            if(err) {
-                resp.send("Please provide valid token");
-            } else {
-                next();
-            }
-        });
+
+checkToken = (req, res, next) => {
+    let token = req.get("authorization");
+    if (token) {
+      token = token.slice(7);
+      jwt.verify(token, "jwtKey", (err, decoded) => {
+        if (err) {
+          res.json({
+            success: 0,
+            message: "Invalid Token!",
+          });
+        } else {
+          next();
+        }
+      });
     } else {
-        resp.send("Please provide token");
+      res.json({
+        success: 0,
+        message: "Access denied!Unauthorized User",
+      });
     }
-}
+  },
 
-module.exports = varifyToken;
+
+module.exports = checkToken;

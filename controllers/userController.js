@@ -1,11 +1,11 @@
 const db = require("../models/index.model");
 const User = db.students;
 const { genSaltSync, hashSync, compareSync } = require("bcrypt");
-
-
+const jwt = require("jsonwebtoken");
 
 const getUser = async (req, res) => {
   let data = await User.findAll({
+    attributes: { exclude: ["password"] },
     where: {
       is_admin: "0",
     },
@@ -37,7 +37,6 @@ const errorValidationHandeler = (error) => {
   }
 };
 
-
 const userCreate = async (req, res) => {
   const temporaryPassword = Math.floor(Math.random() * 100000000);
 
@@ -53,7 +52,7 @@ const userCreate = async (req, res) => {
     });
     // Sending mails
     res.send("User created successfully");
-    if(res) {
+    if (res) {
       sendMail.send({
         to: req.body.email,
         from: "neerajmangoit@gmail.com",
@@ -74,7 +73,6 @@ const userCreate = async (req, res) => {
     }
   }
 };
-
 
 const userVerify = async (req, res) => {
   let salt = genSaltSync(8);
@@ -109,26 +107,28 @@ const userVerify = async (req, res) => {
   }
 };
 
-
 const login = async (req, res) => {
-  let data = await User.findOne({
-    where: {
-      email: req.body.email,
-    },
-  });
-  if (data) {
-    let result = compareSync(req.body.password, data.password);
-    if (result) {
-      console.log(data.password);
-      res.send(data);
+    let data = await User.findOne({
+        where: {
+            email: req.body.email,
+        },
+    });
+    if (data) {
+        let comparedPassword = compareSync(req.body.password, data.password);
+        if (comparedPassword) {
+            jwt.sign({ data }, "jwtKey", { expiresIn: 86400 }, (err, token) => {
+                if (err) {
+                    res.sendStatus("something went wrong");
+                }
+                res.send({ data, auth: token });
+            });
+        } else {
+            res.status(400).send("Please enter valid credentials");
+        }
     } else {
-      res.status(400).send("Please enter valid credentials");
+        res.status(400).send("Please enter valid credentials");
     }
-  } else {
-    res.status(400).send("Please enter valid credentials");
-  }
 };
-
 
 module.exports = {
   getUser,
